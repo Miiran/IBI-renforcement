@@ -74,7 +74,7 @@ class Agent:
         self.model = rn1
         self.modelExpect = rn2
         self.loss_func = torch.nn.MSELoss()
-        self.optim = torch.optim.Adam(self.model.parameters(), lr=TAUX_APPRENTISAGE,weight_decay=1e-4)
+        self.optim = torch.optim.Adam(self.model.parameters(), lr=TAUX_APPRENTISAGE,weight_decay=1e-5)
 
     def train(self):
 
@@ -140,7 +140,7 @@ def resultat(agent,env):
         while not done:
             env.render()
             action = agent.action(torch.FloatTensor(ob))
-            _, reward, done, _ = env.step(action)
+            ob, reward, done, _ = env.step(action)
             score += reward
 
 env = gym.make('CartPole-v1')
