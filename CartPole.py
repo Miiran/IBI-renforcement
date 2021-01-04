@@ -1,20 +1,26 @@
 import gym
 import matplotlib.pyplot as plt
+from gym import wrappers
 import random
 import torch
 import math
 
 BATCH_SIZE = 100
-B_SIZE=100000
-EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 200
+B_SIZE=100000 #taille du buffer
+EPS_START = 0.9 #epsilone au debut de l'apprentissage
+EPS_END = 0.05 #epsilone a la fin de l'apprentissage
+EPS_DECAY = 200 #taux de diminution d'epsilone
 GAMMA = 0.9
-NB_EP = 500
-UPDATE = 15
+NB_EP = 500 #Nombre d'épisode
+UPDATE = 15 #Nombre d'épisode avant d'update le reseau de neurone expect
 TAUX_APPRENTISAGE=0.001
 NB_ACTION=2
 TAILLE_OB=4
+SAVE = False #True pour sauvegarder l'entrainement
+USE_SAVE = True #True pour ne pas entrainer et l'agent et load le fichier
+SAVE_NAME="saveCartpole" #emplacement de la save
+
+
 
 class Buffer:
     def __init__(self):
@@ -44,6 +50,8 @@ class Buffer:
             reward.append(step[3])
             done.append(step[4])
         return ob,action,ob_next,reward,done
+
+
 
 class Rn(torch.nn.Module):
     def __init__(self,nb_entrée,nb_action):
@@ -89,7 +97,7 @@ class Agent:
         Q_net = self.model(ob_batch).gather(1, action_batch.unsqueeze(1))
         Q_next = self.modelExpect(ob_next_batch)
         Q_expect = reward + GAMMA * Q_next.max(1)[0] * done
-
+        print(Q_net)
         loss = self.loss_func(Q_net, Q_expect.unsqueeze(1))
         self.optim.zero_grad()
         loss.backward()
@@ -130,25 +138,33 @@ def train(env,agent,nb_ep):
         tab_reward.append(reward_total)
         if i % UPDATE == 0:
             agent.modelExpect.load_state_dict(agent.model.state_dict())
+    if SAVE : torch.save({'model_state_dict':agent.model.state_dict()}, SAVE_NAME)
     return tab_reward,tab_ep
 
 def resultat(agent,env):
-    for i in range(10):
-        ob = env.reset()
-        score = 0
-        done = False
-        while not done:
-            env.render()
-            action = agent.action(torch.FloatTensor(ob))
-            ob, reward, done, _ = env.step(action)
-            score += reward
+    ob = env.reset()
+    score = 0
+    done = False
+    while not done:
+        env.render()
+        action = agent.action(torch.FloatTensor(ob))
+        ob, reward, done, _ = env.step(action)
+        score += reward
 
 env = gym.make('CartPole-v1')
+NB_ACTION=env.action_space.n
 net=Rn(TAILLE_OB,NB_ACTION)
 net2=Rn(TAILLE_OB,NB_ACTION)
-agent=Agent(net,net2,NB_ACTION)
-taby,tabx=train(env,agent,NB_EP)
-plt.scatter(tabx,taby)
-plt.show()
-resultat(agent,env)
+if USE_SAVE:
+    load=torch.load("./"+SAVE_NAME)
+    net.load_state_dict(load['model_state_dict'])
+    agent = Agent(net, net2, NB_ACTION)
+    resultat(agent, env)
+else:
+    agent = Agent(net, net2, NB_ACTION)
+    taby,tabx=train(env,agent,NB_EP)
+    plt.scatter(tabx,taby)
+    plt.show()
+    resultat(agent, env)
+
 env.close()
