@@ -108,9 +108,9 @@ class Agent:
 
     def action(self,etat):
         self.steps_done+=1
-        eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * self.steps_done / EPS_DECAY)
+        eps = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * self.steps_done / EPS_DECAY)
         res = self.model(etat)
-        if random.random()>eps_threshold:
+        if random.random()>eps:
             return torch.argmax(res).item()
         else:
             return random.randint(0, self.nb_action-1)
