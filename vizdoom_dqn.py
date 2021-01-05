@@ -16,7 +16,7 @@ EPS_END = 0.05 #taux de diminution d'epsilone
 EPS_DECAY = 200
 GAMMA = 0.9
 NB_EP = 100 #Nombre d'épisode
-UPDATE = 5 #Nombre d'épisode avant d'update le reseau de neurone expect
+UPDATE = 2 #Nombre d'épisode avant d'update le reseau de neurone expect
 TAUX_APPRENTISAGE=0.001
 NB_ACTION=2
 SAVE = False #True pour sauvegarder l'entrainement
@@ -82,7 +82,7 @@ class ConvNet(torch.nn.Module):
         convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
         convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
         linear_input_size = convw * convh * 32
-        self.head = torch.nn.Linear(linear_input_size, outputs)
+        self.layer = torch.nn.Linear(linear_input_size, outputs)
         self.relu=torch.nn.ReLU()
 
 
@@ -90,7 +90,7 @@ class ConvNet(torch.nn.Module):
         x = self.relu(self.bn1(self.conv1(x)))
         x = self.relu(self.bn2(self.conv2(x)))
         x = self.relu(self.bn3(self.conv3(x)))
-        return self.head(x.view(x.size(0), -1))
+        return self.layer(x.view(x.size(0), -1))
 
 
 
@@ -103,7 +103,7 @@ class Agent:
         self.model = rn1
         self.modelExpect = rn2
         self.loss_func = torch.nn.MSELoss()
-        self.optim = torch.optim.Adam(self.model.parameters(), lr=TAUX_APPRENTISAGE,weight_decay=1e-2)
+        self.optim = torch.optim.Adam(self.model.parameters(), lr=TAUX_APPRENTISAGE,weight_decay=1e-3)
 
     def train(self):
 

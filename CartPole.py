@@ -97,7 +97,6 @@ class Agent:
         Q_net = self.model(ob_batch).gather(1, action_batch.unsqueeze(1))
         Q_next = self.modelExpect(ob_next_batch)
         Q_expect = reward + GAMMA * Q_next.max(1)[0] * done
-        print(Q_net)
         loss = self.loss_func(Q_net, Q_expect.unsqueeze(1))
         self.optim.zero_grad()
         loss.backward()
@@ -136,6 +135,7 @@ def train(env,agent,nb_ep):
             if agent.buffer.taille > BATCH_SIZE:
                 agent.train()
         tab_reward.append(reward_total)
+		print("episode : {} et reward : {}".format(i, reward_total))
         if i % UPDATE == 0:
             agent.modelExpect.load_state_dict(agent.model.state_dict())
     if SAVE : torch.save({'model_state_dict':agent.model.state_dict()}, SAVE_NAME)
